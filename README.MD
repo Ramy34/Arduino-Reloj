@@ -1,4 +1,4 @@
-# Reloj Bianrio
+# Reloj Binario
 
 ## Objetivo
 - Repasar y aprender más sobre la programación con Arduino realizando un reloj binario.
