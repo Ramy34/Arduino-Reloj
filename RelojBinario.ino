@@ -1,3 +1,7 @@
+//Programa: Reloj_Binario
+//Autor: Ramsés Castro Molano
+//Fecha: 09/09/2020
+
 //Constantes de control
 const int pulsadorModo = 13;
 const int pulsadorCuenta = 12;
@@ -8,14 +12,17 @@ byte horas[] = {8, 9, 10, 11};
 //Constantes de los minutos
 byte minutos[] = {2, 3, 4, 5, 6, 7};
 
+//Constante de los led de modo
+byte modos[] = {0, 1, 13};
+
 //Tamaños de los arreglos
 int minSize = sizeof(minutos) / sizeof(byte);
 int horaSize = sizeof(horas) / sizeof(byte);
+int modoSize = sizeof(modos) / sizeof(byte);
 
 //Variables globales
 int valorDelay = 1000; //1 segundo
-int modo = 1;
-int cuenta = 0;
+int modo = -1;
 int i; //Variable de control
 
 //Reloj
@@ -39,12 +46,16 @@ void setup(){
     for(i = 0; i < minSize; i++){
         pinMode(minutos[i], OUTPUT);
     }
+
+    for(i = 0; i < modoSize; i++){
+        pinMode(modos[i], OUTPUT);
+    }
 }
 
 void loop(){
     Serial.print("Modo: ");
     Serial.println(modo);
-    
+
     switch(modo){
         case -1: //Caso inicial, prende y apaga los leds
             for(i=0; i < horaSize; i++){
@@ -53,7 +64,7 @@ void loop(){
             for(i=0; i < minSize; i++){
                 digitalWrite(minutos[i], !digitalRead(minutos[i]));
             }
-            delay(valorDelay/10);
+            delay(valorDelay/5);
             break;
             
         case 0://Reloj
@@ -61,51 +72,57 @@ void loop(){
             mostrarHora(hora);
             mostrarMinutos(minuto);
             Reloj();
+            Serial.print("Hora: ");
+            Serial.print(hora);
+            Serial.print(" Minuto: ");
+            Serial.print(minuto);
+            Serial.print(" Segundo: ");
+            Serial.println(segundo);
             break;
         
         case 1://Editor de la Hora
             while (modo == 1){
-                Reloj();
                 if(digitalRead(pulsadorCuenta) == HIGH){
                     hora++;
                     if(hora == B1101){
                         hora = B0001;
                     }
                     mostrarHora(hora);
+                    segundo = 0;
                 }
-                delay(valorDelay/2);
                 if(digitalRead(pulsadorModo) == HIGH){
                     modo++;
                 }
+                Reloj();
             }
             break;
         
         case 2://Editor de los minutos
             while (modo == 2){
-                Reloj();
                 if(digitalRead(pulsadorCuenta) == HIGH){
-                    hora++;
+                    minuto++;
                     if(minuto == B111100){
                         minuto = B0000;
                     }
                     mostrarMinutos(minuto);
+                    segundo = 0;
                 }
-                delay(valorDelay/2);
                 if(digitalRead(pulsadorModo) == HIGH){
-                    modo++;
+                    modo=0;
                 }
+                Reloj();
             }
         break;
     }
     //Hacemos la lectura del botón de modo
     if(digitalRead(pulsadorModo) == HIGH){
-        if (modo == 3){
+        if (modo == 2){
             modo = 0;
         }
         else{
             modo++;
         }
-        delay(valorDelay/2);
+        delay(valorDelay/4);
     }
 }
 
@@ -123,13 +140,6 @@ void Reloj(){
     if(hora == B1101){ //En caso de que las horas lleguen a 12 se va a 1
         hora = 1;
     }
-
-    Serial.print("Hora: ");
-    Serial.print(hora);
-    Serial.print(" Minuto: ");
-    Serial.print(minuto);
-    Serial.print(" Segundo: ");
-    Serial.println(segundo);
     //Espera un segundo
     delay(valorDelay);
 }
@@ -145,7 +155,8 @@ void mostrarMinutos(byte minuto){
     digitalWrite(minutos[i], GetBit(minuto, i));
     }
 }
-bool GetBit( byte N, int pos){  // pos = 7 6 5 4 3 2 1 0
+
+bool GetBit(byte N, int pos){  // pos = 7 6 5 4 3 2 1 0
        int b = N >> pos ;       // Shift bits
        b = b & 1 ;              // coger solo el ultimo bit
        return b ;
