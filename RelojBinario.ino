@@ -2,23 +2,19 @@
 //Autor: Ramsés Castro Molano
 //Fecha: 09/09/2020
 
-//Constantes de control
-const int pulsadorModo = 13;
-const int pulsadorCuenta = 12;
-
 //Constantes de la hora
-byte horas[] = {8, 9, 10, 11};
+byte horas[] = {10, 11, 12, 13};
 
 //Constantes de los minutos
-byte minutos[] = {2, 3, 4, 5, 6, 7};
+byte minutos[] = {4, 5, 6, 7, 8, 9};
 
-//Constante de los led de modo
-byte modos[] = {0, 1, 13};
+//Constantes de control
+const int pulsadorModo = 3;
+const int pulsadorCuenta = 2;
 
 //Tamaños de los arreglos
 int minSize = sizeof(minutos) / sizeof(byte);
 int horaSize = sizeof(horas) / sizeof(byte);
-int modoSize = sizeof(modos) / sizeof(byte);
 
 //Variables globales
 int valorDelay = 1000; //1 segundo
@@ -45,10 +41,6 @@ void setup(){
     
     for(i = 0; i < minSize; i++){
         pinMode(minutos[i], OUTPUT);
-    }
-
-    for(i = 0; i < modoSize; i++){
-        pinMode(modos[i], OUTPUT);
     }
 }
 
