@@ -19,6 +19,8 @@
 ## Planteamiento
 - Se debe crear un programa que muestre un reloj binario en los led.
 - Se debe poder modificar la hora por defecto por la actual.
+- Utilizar las interrupciones de Arduino para modificar los varoles.
 
 ## Versiones
 - [v1.0] (2021-09-09) - El proyecto es funcional, pero tiene algunos detalles que no están bien con respecto a la modificación de la hora y los minutos.
+- [v2.0] (2021-09-11) - Se completa el objetivo del proyecto y funciona de manera perfecta.
