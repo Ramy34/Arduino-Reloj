@@ -18,21 +18,17 @@ int horaSize = sizeof(horas) / sizeof(byte);
 
 //Variables globales
 int valorDelay = 1000; //1 segundo
-int modo = -1;
+int modo = 0; //Estado Inicial
 int i; //Variable de control
 
-//Reloj
+//Variables del reloj
 byte hora = B1100; 
 byte minuto = B000000;
-int segundo = 0;
+int segundos = 0;
 
 void setup(){
     //Inicializamos el puerto serial
     Serial.begin(9600);
-    
-    //Inicializamos los botones como entradas
-    pinMode(pulsadorModo, INPUT);
-    pinMode(pulsadorCuenta, INPUT);
     
     //Inicializamos los leds como salidas
     for(i = 0; i < horaSize; i++){
@@ -42,87 +38,27 @@ void setup(){
     for(i = 0; i < minSize; i++){
         pinMode(minutos[i], OUTPUT);
     }
+
+    //Inicialimamos el boton de modo como una interrupción
+    pinMode(pulsadorCuenta, INPUT_PULLUP);
+    pinMode(pulsadorModo, INPUT_PULLUP);
+
+    attachInterrupt(digitalPinToInterrupt(pulsadorCuenta), aumentarCuenta, FALLING);
+    attachInterrupt(digitalPinToInterrupt(pulsadorModo), aumentarModo, FALLING);
 }
 
 void loop(){
     Serial.print("Modo: ");
     Serial.println(modo);
-
-    switch(modo){
-        case -1: //Caso inicial, prende y apaga los leds
-            for(i=0; i < horaSize; i++){
-                digitalWrite(horas[i], !digitalRead(horas[i]));
-            }
-            for(i=0; i < minSize; i++){
-                digitalWrite(minutos[i], !digitalRead(minutos[i]));
-            }
-            delay(valorDelay/5);
-            break;
-            
-        case 0://Reloj
-            //Mostramos la hora y los minutos
-            mostrarHora(hora);
-            mostrarMinutos(minuto);
-            Reloj();
-            Serial.print("Hora: ");
-            Serial.print(hora);
-            Serial.print(" Minuto: ");
-            Serial.print(minuto);
-            Serial.print(" Segundo: ");
-            Serial.println(segundo);
-            break;
-        
-        case 1://Editor de la Hora
-            while (modo == 1){
-                if(digitalRead(pulsadorCuenta) == HIGH){
-                    hora++;
-                    if(hora == B1101){
-                        hora = B0001;
-                    }
-                    mostrarHora(hora);
-                    segundo = 0;
-                }
-                if(digitalRead(pulsadorModo) == HIGH){
-                    modo++;
-                }
-                Reloj();
-            }
-            break;
-        
-        case 2://Editor de los minutos
-            while (modo == 2){
-                if(digitalRead(pulsadorCuenta) == HIGH){
-                    minuto++;
-                    if(minuto == B111100){
-                        minuto = B0000;
-                    }
-                    mostrarMinutos(minuto);
-                    segundo = 0;
-                }
-                if(digitalRead(pulsadorModo) == HIGH){
-                    modo=0;
-                }
-                Reloj();
-            }
-        break;
-    }
-    //Hacemos la lectura del botón de modo
-    if(digitalRead(pulsadorModo) == HIGH){
-        if (modo == 2){
-            modo = 0;
-        }
-        else{
-            modo++;
-        }
-        delay(valorDelay/4);
-    }
+    reloj();
 }
 
-void Reloj(){
+//Función del reloj
+void reloj(){
     //Avanzan los segundos
-    segundo++;
-    if(segundo == 60){ //En caso de que los segundos completen una vuelta se reinician
-        segundo = 0;
+    segundos++;
+    if(segundos == 60){ //En caso de que los segundos completen una vuelta se reinician
+        segundos = 0;
         minuto++;
     }
     if(minuto == B111100){ //En caso de que los minutos completen una vuelta se reinician
@@ -133,23 +69,72 @@ void Reloj(){
         hora = 1;
     }
     //Espera un segundo
+    mostrarHora(hora);
+    mostrarMinutos(minuto);
+    mensajesSerial();
     delay(valorDelay);
 }
 
+//Funciones que despliegan los valores en los leds
 void mostrarHora(byte hora){
     for(i = 0; i < horaSize; i++){
-        digitalWrite(horas[i], GetBit(hora, i));
+        digitalWrite(horas[i], getBit(hora, i));
     }
 }
 
 void mostrarMinutos(byte minuto){
   for(i = 0; i < minSize; i++){
-    digitalWrite(minutos[i], GetBit(minuto, i));
+    digitalWrite(minutos[i], getBit(minuto, i));
     }
 }
 
-bool GetBit(byte N, int pos){  // pos = 7 6 5 4 3 2 1 0
+//Función que nos regresa el valor de un bit
+bool getBit(byte N, int pos){  // pos = 7 6 5 4 3 2 1 0
        int b = N >> pos ;       // Shift bits
        b = b & 1 ;              // coger solo el ultimo bit
        return b ;
+}
+
+//Funciones de las intrrrupciones
+void aumentarModo(){
+    if(modo == 2){
+        modo = 0;
+    }else{
+        modo++;
+    }
+}
+
+void aumentarCuenta(){
+    switch(modo){
+        case 0: //Cambiar las horas
+            hora++;
+            if(hora == B1101){
+                hora = B0001;
+            }
+            mostrarHora(hora);
+            mostrarMinutos(B000000);
+            break;
+        case 1: //Cambiar los minutos
+            minuto++;
+            if(minuto == B111100){
+                minuto = B000000;
+            }
+            mostrarHora(B0000);
+            mostrarMinutos(minuto);
+            break;
+        case 2: //Reiniciar los minutos
+            segundos = 0;
+            break;
+        default:
+            break;
+    }
+}
+
+void mensajesSerial(){
+    Serial.print("Hora: ");
+    Serial.print(hora);
+    Serial.print(" Minutos: ");
+    Serial.print(minuto);
+    Serial.print(" Segundos: ");
+    Serial.println(segundos);
 }
